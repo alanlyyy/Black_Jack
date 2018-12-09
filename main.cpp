@@ -1,130 +1,51 @@
+/* This code is the glue for the Deck and Player class. This class implements
+ * the game of blackjack.
+ * 
+ *Reference:
+ * https://stackoverflow.com/questions/19521320/why-do-i-get-an-infinite-loop-if-i-enter-a-letter-rather-than-a-number
+ */
+
 /* 
  * File:   main.cpp
  * Author: Alan Ly
  *
- * Created on November 24, 2018, 8:21 AM
- * 
- * A game of blackjack implemented using functions
+ * Created on November 28, 2018, 9:12 PM
  */
 
-#include <cstdlib>            
-#include <iostream>         //std:cout
-#include <algorithm>        //std:shuffle
-#include <random>           //std:default_random_engine
-#include <chrono>           // std::chrono::system_clock
-#include <vector>           //std:vector
-#include <string>
+//include the header file  for the deck class
+#include <C:\Users\Alan Ly\Documents\NetBeansProjects\Blackjack_classes\Deck.hpp>
+#include <C:\Users\Alan Ly\Documents\NetBeansProjects\Blackjack_classes\Player.hpp>
+
 using namespace std;
 
-/*
- * 
- */
-
-struct Player
+int user_menu()
 {
-    vector<string> player_hand;
-    vector<string> player_deck;
-};
-
-Player deal_hand(vector<string> Deck)
-    {
+    int selection;
+    cout << "Hit (1) or Stay (0)?" << endl;
+    cin >> selection;
     
-    vector<string> hand;
-    
-    //deal 2 cards to the hand
-    for(int index = 0; index < 2; index++)
-        {
-        
-         //append to the beginning of hand by drawing from end of the deck
-         hand.insert(hand.begin(),Deck[Deck.size()-1]);
-         
-         //pop the end index since the card already has been drawn
-         Deck.pop_back();
-         
-        }
-    return { hand, Deck };
- }
-
-Player draw_card( vector<string> hand, vector<string> Deck )
-{
-    hand.push_back(Deck[Deck.size()-1]); //draw the last card of the deck
-    Deck.pop_back();           //remove the last card since it was drawn
-    
-    return {hand, Deck};
+    return selection;
 }
-
-
-//array template class to return array of 52 cards
-vector<string> create_deck()
-{
-    
-    vector<string> Deck;        //to store the deck of different cards  
-    
-    vector<string> Cards = {"A","2","3","4",
-                        "5","6","7","8",
-                        "9","10","J","Q","K"}; //stores all the different card types
-                                
-    int count = 0;              //stores the index for Deck 
-    
-    //index each card type append to the deck
-    for(int card_index = 0; card_index < 13; card_index++)
-        
-        {
-            //append each suit of the specific card type to the deck
-            Deck.insert(Deck.begin(),4 , Cards[card_index]);
-            
-        }
-    
-    /*Test
-    cout << "Deck: ";
-    for(int card_index = 0; card_index < Deck.size(); card_index++)
-    {
-        cout << Deck[card_index];
-    }
-    */   
-    
-    return Deck;
-}
-
-vector<string> shuffle_deck( vector<string> Deck )
-{
-  // obtain a time-based seed to randomize shuffling of indexes:
-  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-   
-  //shuffles the deck 52 cards
-  shuffle(Deck.begin(),Deck.end(),default_random_engine(seed));
-  
-  /*Test
-  cout << "shuffled elements:";
-  
-  for (string& x: Deck) cout << ' ' << x;
-  cout << '\n';
-  */
-  
-  return Deck;
-}
-
-
 
 int score_hand(Player player)
 {
    int score = 0;
    int num_ace = 0;     //holds the position of the number of aces in a hand
    
-   for(int index = 0; index < player.player_hand.size(); index++)   
+   for(int index = 0; index < player.get_hand().size(); index++)   
    {
-       if( player.player_hand[index] == "J" or player.player_hand[index] == "Q"
-               or player.player_hand[index] == "K")
+       if( player.get_hand()[index] == "J" or player.get_hand()[index] == "Q"
+               or player.get_hand()[index] == "K")
        {
            score += 10;
        }
-       else if(player.player_hand[index] == "A")
+       else if(player.get_hand()[index] == "A")
        {
            num_ace += 1;
        }
        else
        {
-           score += stoi(player.player_hand[index]);
+           score += stoi(player.get_hand()[index]);
        }
    }
    
@@ -144,164 +65,273 @@ int score_hand(Player player)
    return score;
 }
 
-void display_hand(Player player)
+bool rank_player_hand(int score1, int score2)
 {
-    cout << "Hand: ";
-    for(int index = 0; index < player.player_hand.size(); index++)
+    if (score1 > 21)
     {
-    cout << player.player_hand[index] << " ";
+        return false;
     }
-    cout << endl;
-}
-
-void display_Deck(Player player)
-{
-    cout << "Deck: ";
-    for(int index = 0; index < player.player_deck.size(); index++)
+    else if(score2 > 21)
     {
-    cout << player.player_deck[index] << " ";
-    }
-    cout << endl;
-}
-
-void compare_score(int player_score, int COM_score)
-{
-    if (player_score > COM_score and player_score < 22 or COM_score > 21 )
-    {
-        cout << "Player 1 has won. ";
+        return true;
     }
     else
     {
-        cout << "COM has won. ";
-    }
+        if (score1 > score2)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
             
+    }
 }
 
-
-void play_game()
+bool is_black_jack(Player player)
 {
-    //keeps a running sum of the score
-    int score;
-    int COM_score;
+    bool ace_flag =false;
+    bool face_flag = false;
     
-    //create a deck with 52 cards
-    vector<string> create_Deck = create_deck();
-    
-    //shuffle the cards in randomize order
-    vector<string> shuffled_Deck = shuffle_deck(create_Deck);
-    
-    //create a player for the game player contains a hand and a deck
-    Player player1 = deal_hand(shuffled_Deck);
-    
-    //update the shuffled deck
-    shuffled_Deck = player1.player_deck;
-    
-    //create player 2 computer
-    Player COM = deal_hand(shuffled_Deck);
-    
-    //display hand
-    display_hand(player1);
-    
-    string choice;
-    cout << "Do you hit or stay? hit/stay " << endl; 
-    cin >> choice;
-    
-    while (choice != "stay")
-    {   
-        // draw card
-        player1 = draw_card(player1.player_hand,shuffled_Deck);
-        
-        //update the deck
-        shuffled_Deck = player1.player_deck;
-        
-        //check the score
-        score = score_hand(player1);
-        
-        if (score > 21)
-        {
-            break;
-        }
-        //reset score for next iteration
-        score = 0;
-                
-        //show the hand
-        display_hand(player1);
-        
-        //prompt the user
-        cout << "Do you hit or stay? hit/stay " << endl; 
-        cin >> choice;
+    for (int card = 0; card < player.get_hand().size(); card++)
+    { 
+     if (player.get_hand()[card] == "J" or    
+                player.get_hand()[card] == "Q" or
+                    player.get_hand()[card] == "K" or
+                        player.get_hand()[card] == "10")
+     {
+         face_flag = true;
+     }
+     
+     if (player.get_hand()[card] == "A")
+     {
+         ace_flag = true;
+     }    
     }
     
-    //reset score
-    score = 0;
-    //calculate score
-    score = score_hand(player1);
+    return (ace_flag and face_flag);
+}
+
+bool is_split_condition(Player player, string card)
+{
     
-    if (score > 21)
+    int count = 0;
+    for (int index = 0; index < player.get_hand().size(); index++)
     {
-        cout << "You Bust. " <<endl;
-        
-        //prevents memory from returning random values
-        COM_score = 0;
+        if (card == player.get_hand()[index])
+        {
+            count++;
+        }
+    }
+    if (count == 2)
+    {
+        return true;
     }
     else
     {
-        while (1)
-        {   
-        
-        //display hand
-        display_hand(COM);
-        
-        //calculate the score
-        COM_score = score_hand(COM);
-        
-        //break out of the loop if computer has a score in the range of 18 - 21
-        //or bust
-        if ((COM_score <= 21 and COM_score > 17) or COM_score > 21) 
-        {
-            display_hand(COM);
-            break;
-        }
-        
-        // draw card
-        COM = draw_card(COM.player_hand,shuffled_Deck);
-        
-        //update the deck
-        shuffled_Deck = COM.player_deck;
-        
-        //reset score for calculation again
-        COM_score = 0;
-        
-        }  
-        
+        return false;
     }
-    
-    cout << endl << "Com score: " << COM_score;
-    cout << endl <<  "Player score: " << score;
-    cout << endl;
-    
-    compare_score(score,COM_score);
-     
 }
 
-int main() {
+void split_hand(Player player,string card)
+{
+    vector<string> temp_hand = player.get_hand();
     
-    char choice;
-    
+    for (int index = 0; index < player.get_hand().size(); index++)
+    {
+        //if the card is equal to the card that the user wants to split
+        if (card == player.get_hand()[index])
+        {
+            //add to list of removed cards for debugging
+            player.removed_from_current_hand.push_back(player.get_hand()[index]);
+            
+            //change card to vector and add it to vector of vectors
+            player.split_hand.push_back({player.get_hand()[index]});
+        }
+    }
     while(1)
     {
-        play_game();
+        int count = 0;
         
-        cout << "Play again?Y/N ";
-        cin >> choice;
+        if (temp_hand[count] == card)
+        {
+            temp_hand.erase(count);
+        }
         
-        if (choice == 'N')
+        count++;
+        
+        if (count > temp_hand.size())
         {
             break;
         }
-                
+    } 
+}
+
+void function_tester()
+{
+    cout <<"test all functions";
+}
+
+void play_game()
+{   
+    //initialize the players
+    Player player1, COM;
+    
+    //initialize the game deck
+    Deck myDeck;
+    
+    //create the deck and shuffle it
+    myDeck.create_deck();
+    myDeck.shuffle_deck();
+    
+    //set initial points for the players
+    player1.set_initial_points(10);
+    COM.set_initial_points(10);
+
+    int pot = 0;
+    
+    while( player1.get_points() > 0 and COM.get_points() > 0)
+    {   
+        //keeps count of total_card_score
+        int COM_score, player_score, player_ante;
+        
+        //deal hands to player and computer
+        player1.set_hand(myDeck.deal_hand());
+        COM.set_hand(myDeck.deal_hand());
+        
+        //test the blackjack condition
+        //vector<string> black_jack = {"K", "A"};
+        //player1.set_hand(black_jack);
+        
+        //display the hands of com and player1
+        cout << "Player ";
+        player1.print_hand();
+        cout << "COM "; 
+        COM.print_hand();
+        
+        //display number of points
+        cout << "Player 1 Points: "<< player1.get_points() << endl;
+        cout << "COM Points: "<< COM.get_points() << endl;
+       
+        //set player ante----------------------------------
+        cout << "Player ante " << endl;
+        player_ante = 0;
+        //while condition checks error state of input buffer and reprompts user
+        while(!(cin >> player_ante))
+            {
+            //clear the error bit of the input buffer
+            cin.clear();
+            //ignore values that are not integers
+            cin.ignore(1, '\n');
+            cout << "Invalid input.  Try again: ";
+            }
+        cout << "You enterd: " << player_ante << endl;     
+        //--------------------------------------------------
+        
+        player1.update_points( player_ante , "sub");
+        pot += player_ante;
+        
+        COM.update_points( player_ante , "sub");
+        pot += player_ante;
+        
+        
+        bool black_jack_condition = is_black_jack(player1);
+        
+        if (black_jack_condition == true)
+        {
+            
+            cout << "Player got black jack!" << endl;
+            
+            //update the points for player
+            player1.update_points(pot, "add");
+            
+            //reset the pot
+            pot = 0;            
+            
+            //reset the hand
+            player1.reset_hand();
+            COM.reset_hand();
+        
+            //reset the deck
+            myDeck.create_deck();
+            myDeck.shuffle_deck();
+            
+            //jump back to the beginning of the loop and start a new round
+            continue;
+        }
+       
+        //prompt user to hit or stay
+        int user_option = user_menu();
+        cout << "----------------------------" << endl;
+        
+        //while user continues to hit 
+        while (user_option == 1)
+        {
+            //draw card and update user hand
+            player1.update_hand(myDeck.draw_card());
+            player1.print_hand();
+            user_option = user_menu();
+            cout << "----------------------------" << endl;
+        }
+        
+        // COM's turn to play      
+        while(1)
+        {
+            COM_score = score_hand(COM);
+            
+            if(COM_score < 17)
+            {
+                COM.update_hand(myDeck.draw_card());
+                cout << "COM ";
+                COM.print_hand();
+            }
+            else
+            {
+                break;
+            }   
+            //reset the score for next iteration
+            COM_score = 0;
+        }
+        cout << "----------------------------" << endl;
+        //calculate the score of the hand
+        player_score = score_hand(player1);
+        COM_score = score_hand(COM);
+        
+        bool did_player1_win = rank_player_hand(player_score,COM_score);
+        
+        if (did_player1_win == false)
+        { 
+           //add pot
+           COM.update_points(pot,"add"); 
+           
+           //reset pot
+           pot = 0;
+        }
+        else 
+        { 
+           //add pot
+           player1.update_points(pot,"add");
+           
+           //reset pot
+           pot = 0;
+        }
+        
+        //reset the hand
+        player1.reset_hand();
+        COM.reset_hand();
+        
+        //reset the deck
+        myDeck.create_deck();
+        myDeck.shuffle_deck();
+         
     }
+    
+}
+//Test the functions of the class
+int main() {
+    
+    play_game();
     
     return 0;
 }
-
